@@ -15,6 +15,7 @@ class KaraokePlayer:
         self.root.title("Karaoke Player")
         
         self.current_dir = self.load_initial_directory()
+        self.initial_dir = self.current_dir
         if not self.current_dir:
             self.current_dir = os.path.expanduser("~")  # Use home directory as default
 
@@ -102,8 +103,10 @@ class KaraokePlayer:
             self.stop_video()  # Stop the video when going back
 
         parent_dir = os.path.dirname(self.current_dir)
-        if parent_dir != self.current_dir:  # Prevent going beyond root
+        if self.initial_dir in parent_dir:
             self.load_directory(parent_dir)
+        #if parent_dir != self.current_dir:  # Prevent going beyond root
+        #    self.load_directory(parent_dir)
 
     def play_video(self):
         selected_item = self.item_listbox.get(tk.ACTIVE)
@@ -111,13 +114,13 @@ class KaraokePlayer:
         video_path = os.path.join(self.current_dir, item_name)
         if os.path.isfile(video_path):
             self.start_video(video_path)
-            self.toggle_fullscreen(True)  # Enter fullscreen mode when video starts
 
     def start_video(self, path):
         if self.player:
             self.player.close_player()
 
         self.player = MediaPlayer(path, callback=self.video_callback)
+        self.player.set_size(width=1280, height=720)
         self.set_volume(self.volume_slider.get())  # Set initial volume
         self.update_frame()
 
@@ -125,7 +128,8 @@ class KaraokePlayer:
         if self.player:
             self.player.close_player()
             self.player = None
-        self.toggle_fullscreen(True)  # Exit fullscreen mode
+            self.video_label.imgtk = None
+            self.video_label.config(image=None)
 
     def set_volume(self, volume):
         if self.player:
@@ -154,9 +158,3 @@ class KaraokePlayer:
                 self.root.after(10, self.update_frame)
             else:
                 self.stop_video()  # Stop the video when it ends
-
-    def toggle_fullscreen(self, is_fullscreen):
-        self.fullscreen = is_fullscreen
-        self.root.attributes("-fullscreen", self.fullscreen)
-        #if not self.fullscreen:
-        #    self.root.geometry("800x600")
